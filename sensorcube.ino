@@ -13,6 +13,7 @@ const int TRIGGER_PIN = 2; //auf diesem Pin liegt der Ultraschall-Trigger
 const int ECHO_PIN = 3;     // auf diesem Pin liegt der Ultraschall - Echo
 
 long distance_ultra = 0;
+int analog_light = 0;
 
 void setup() {
   Serial.begin(9600);
@@ -49,6 +50,8 @@ long get_Distance_Ultra() {
   return distance;                                // mit den Zentimetern pro Mikrosekunde Schallgeschwindigkeit und addieren +0,5 fürs korrekte runden.
 }
 
+
+
 void loop() {
   long distance = get_Distance_Ultra();
   u8x8.clearDisplay();
@@ -61,7 +64,17 @@ void loop() {
   u8x8.println("Zentimeter");
 
   delay(5000);
-  
+
+
+  analog_light = analogRead(A0);
+  u8x8.clearDisplay();
+  u8x8.setCursor(0, 0);
+  u8x8.setInverseFont(1);
+  u8x8.println("Photoresistor: ");
+  u8x8.setCursor(0, 1);
+  u8x8.println(analog_light);
+
+  delay(5000);
   
 
 }
