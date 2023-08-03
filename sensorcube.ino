@@ -15,6 +15,7 @@ const int ROTARY_A_PIN = 5;
 const int ROTARY_B_PIN = 4;
 const int ROTARY_SW = 2; // muss auf einem Interrupt fähigen Pin liegen, beim UNO Pin 2 oder 3
 const int REED_PIN = 8;
+const int NUMBER_SENSORS = 3;
 
 long distance_ultra = 0;
 int analog_light = 0;
@@ -23,6 +24,7 @@ int rotary_A_Last;
 int encoderPosCount = 0;
 int aVal;
 boolean bCW; //clockwise, Uhrzeigersinn
+
 
 int i = 0;
 
@@ -118,15 +120,8 @@ void loop() {
     }
     Serial.println(encoderPosCount);
 
-    if (encoderPosCount < 0) {          // da wir nur 
-      i = 0;
-    }
-    else if (encoderPosCount > 7) {
-      i = 7;
-    }
-    else {
-      i = encoderPosCount;
-    }
+i = abs(encoderPosCount) % NUMBER_SENSORS;
+
     Serial.println(i);
 
     switch (i) {
