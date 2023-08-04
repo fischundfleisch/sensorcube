@@ -15,7 +15,8 @@ const int ROTARY_A_PIN = 5;
 const int ROTARY_B_PIN = 4;
 const int ROTARY_SW = 2; // muss auf einem Interrupt fähigen Pin liegen, beim UNO Pin 2 oder 3
 const int REED_PIN = 8;
-const int NUMBER_SENSORS = 3;
+const int FORCE_PIN = A1;
+const int NUMBER_SENSORS = 4;
 
 long distance_ultra = 0;
 int analog_light = 0;
@@ -108,6 +109,16 @@ void show_Reed() {
   }
 }
 
+void show_Force() {
+  int force = analogRead(FORCE_PIN);
+  u8x8.clearDisplay();
+  u8x8.setCursor(0,0);
+  u8x8.setInverseFont(1);
+  u8x8.println("Kraftsensor: ");
+  u8x8.setCursor(0,1);
+  u8x8.print(force);                // 1024 entspricht 2 kg, die Anzeige sind Analogwerte, hier müssten wir noch umrechnen
+}
+
 void loop() {
   aVal = digitalRead(ROTARY_A_PIN);
   if (aVal != rotary_A_Last) {    // etwas hat sich geändert, der Knopf ist gedreht worden
@@ -118,29 +129,30 @@ void loop() {
       encoderPosCount--;
       bCW = false;
     }
-    Serial.println(encoderPosCount);
-
+    
 i = abs(encoderPosCount) % NUMBER_SENSORS;
-
-    Serial.println(i);
 
     switch (i) {
       case 0:
-        Serial.println("Case 0");
         show_US();
         break;
       case 1:
-        Serial.println("Case 1");
         show_Light();
         break;
       case 2:
-        Serial.println("Case 2");
         show_Reed();
+        break;
+      case 3:
+        show_Force();
         break;
       default:
         show_US();
         break;
     }
   }
+  u8x8.setCursor(0,3);
+  u8x8.setInverseFont(0);
+  u8x8.print("Steps: ");
+  u8x8.println(encoderPosCount);
   rotary_A_Last = aVal;
 }
