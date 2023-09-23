@@ -4,19 +4,34 @@
 // 0.91 inch Oled über I²C Bus
 // 16x3 Zeichen. Cursor wird wie folgt angesprochen: u8x8.setCurosor([gewünschtes Zeichen als INT], [gewünschte Zeile als INT])
 
-#include <Wire.h>
+#include <DHT.h>
+#include <OneWire.h>
+#include <DallasTemperature.h>
 #include <U8g2lib.h>    // eine Bibliothek zur Kommunikation mit dem Display
+// Display Anschluss erfolgt über SDA - A4 und SCK - A5
+
+#define ONE_WIRE_BUS 2
+
+OneWire oneWire(ONE_WIRE_BUS);    // wir erstellen eine OneWire Instanz um mit allen Temperatursensoren zu kommunizieren
+DallasTemperature sensors(&oneWire);  // hier kann nämlich mehr als nur einer am selben Pin hängen
 
 U8X8_SSD1306_128X32_UNIVISION_HW_I2C u8x8(/* reset=*/ U8X8_PIN_NONE);   // hier wird der Typ des Displays bestimmt
 
+#define DHTPIN  10
+#define DHTTYPE DHT22
+
+DHT dht(DHTPIN, DHTTYPE);
+
 const int TRIGGER_PIN = 6; //auf diesem Pin liegt der Ultraschall-Trigger
 const int ECHO_PIN = 7;     // auf diesem Pin liegt der Ultraschall - Echo
-const int ROTARY_A_PIN = 5;
-const int ROTARY_B_PIN = 4;
-const int ROTARY_SW = 2; // muss auf einem Interrupt fähigen Pin liegen, beim UNO Pin 2 oder 3
+const int ROTARY_A_PIN = 5; //DT-PIN
+const int ROTARY_B_PIN = 4; // CLK-Pin
+//const int ROTARY_SW = 2; // muss auf einem Interrupt fähigen Pin liegen, beim UNO Pin 2 oder 3
 const int REED_PIN = 8;
 const int FORCE_PIN = A1;
-const int NUMBER_SENSORS = 4;
+const int DHT_PIN = 10;
+
+const int NUMBER_SENSORS = 5;
 
 long distance_ultra = 0;
 int analog_light = 0;
@@ -25,7 +40,6 @@ int rotary_A_Last;
 int encoderPosCount = 0;
 int aVal;
 boolean bCW; //clockwise, Uhrzeigersinn
-
 
 int i = 0;
 
@@ -47,6 +61,14 @@ void setup() {
   pinMode(ROTARY_A_PIN, INPUT);
   pinMode(ROTARY_B_PIN, INPUT);
   rotary_A_Last = digitalRead(ROTARY_A_PIN);
+
+  pinMode (REED_PIN, INPUT);
+
+  pinMode(DHT_PIN, INPUT);
+  dht.begin();
+
+  pinMode(DS18B20_PIN, INPUT_PULLUP);
+  sensors.begin();
 
   Serial.println("Booten abgeschlossen");
 
@@ -80,6 +102,7 @@ void show_US() {
   u8x8.setCursor(0, 2);
   u8x8.println("Zentimeter");
 }
+
 
 void show_Light() {
   analog_light = analogRead(A0);
@@ -115,8 +138,24 @@ void show_Force() {
   u8x8.setCursor(0,0);
   u8x8.setInverseFont(1);
   u8x8.println("Kraftsensor: ");
-  u8x8.setCursor(0,1);
+  u8x8.setCursor(0,1);              // mehr Kraft = weniger Widerstand, ca 1MOhm bei 0 Kraft
   u8x8.print(force);                // 1024 entspricht 2 kg, die Anzeige sind Analogwerte, hier müssten wir noch umrechnen
+}
+
+void show_dht22() {
+  float h = dht.readHumidity();
+  float t = dht.readTemperature();
+
+  u8x8.clearDisplay();
+  u8x8.setCursor(0,0);
+  u8x8.setInverseFont(1);
+  u8x8.print("Temp.: ");
+  u8x8.print(t);
+  u8x8.println(" °C");
+  u8x8.setCursor(0,1);
+  u8x8.print("Feucht: ");
+  u8x8.print(h);
+  u8x8.println(" %");
 }
 
 void loop() {
@@ -144,6 +183,9 @@ i = abs(encoderPosCount) % NUMBER_SENSORS;
         break;
       case 3:
         show_Force();
+        break;
+      case 4:
+        show_dht22();
         break;
       default:
         show_US();
